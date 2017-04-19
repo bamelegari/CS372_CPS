@@ -194,12 +194,13 @@ class composite : public shape //template for horizontal, vertical, and layered
 {
 
 protected:
-	vector<shape> _shapes;
+	vector<shared_ptr<shape>> _shapes;
 
 public:
 
 	virtual ~composite() = default;
-	explicit composite(vector<shape> shapes);	//all children inherit this c'tor
+	explicit composite(initializer_list<shared_ptr<shape>> shapes);	//all children inherit these c'tors
+	void calcDimensions();
 
 	virtual string moveToStart() const = 0;
 	string drawShape(int index) const;

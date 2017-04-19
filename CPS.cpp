@@ -332,26 +332,32 @@ string shape::draw(const shape &s, int x, int y)
 	return ret;
 }
 
-composite::composite(vector<shape> shapes)
+void composite::calcDimensions()
 {
-	_shapes = shapes;
 	setWidth(0);
 	for (int i=0; i < _shapes.size(); ++i)
 	{
-		setWidth(getWidth() + shapes[i].getWidth());
+		setWidth(getWidth() + _shapes[i]->getWidth());
 	}
 
 	setHeight(0);
 	for(int i=0; i < _shapes.size(); ++i)
 	{
-		setHeight(getWidth() + shapes[i].getHeight());
+		setHeight(getWidth() + _shapes[i]->getHeight());
 	}
+}
+
+
+composite::composite(initializer_list<shared_ptr<shape>> shapes)	//takes a vector
+{
+	_shapes = shapes;
+	calcDimensions();
 }
 
 
 string composite::drawShape(int index) const
 {
-	return _shapes[index].getPostScript();
+	return _shapes[index]->getPostScript();
 }
 
 string composite::getPostScript() const
@@ -396,7 +402,7 @@ string horizontal::moveToNext(int currentIndex) const
 	//move right to next draw position
 	string ret = "X 0 rmoveto \n";
 
-	findAndReplace(ret, "X", to_string(_shapes[currentIndex].getWidth()/2));
+	findAndReplace(ret, "X", to_string(_shapes[currentIndex]->getWidth()/2));
 	return ret;
 }
 
@@ -405,7 +411,7 @@ string vertical::moveToNext(int currentIndex) const
 	//move down to next draw position
 	string ret = "0 -Y rmoveto \n";
 
-	findAndReplace(ret, "Y", to_string(_shapes[currentIndex].getHeight()/2));
+	findAndReplace(ret, "Y", to_string(_shapes[currentIndex]->getHeight()/2));
 	return ret;
 }
 
