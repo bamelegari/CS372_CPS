@@ -190,45 +190,51 @@ public:
 	string getPostScript() const override;
 
 };
-class vertical : public shape
+
+class composite : public shape
+{
+
+private:
+	virtual ~composite() = default;
+	string _postScript;
+
+public:
+
+	composite();
+
+
+	moveToStart();
+
+};
+
+
+class vertical : public composite
+{
+private:
+
+
+public:
+
+
+};
+
+class horizontal : public composite
 {
 
 private:
 
-	string _postScript;
-	string vertStackOdd(const vector<shared_ptr<shape>> &shapes, int offset);
 public:
-
-	vertical(initializer_list<shared_ptr<shape>> shapes);
-
-	string getPostScript() const override;
 
 };
 
-class horizontal : public shape
-{
-
-private:
-
-	string _postScript;
-	string horStackOdd(const vector<shared_ptr<shape>> &shapes, int offset);
-public:
-
-	horizontal(initializer_list<shared_ptr<shape>> shapes);
-
-	string getPostScript() const override;
-
-};
-
-class layered : public shape
+class layered : public composite
 {
 private:
-	string _postScript;
+
 public:
-	layered(initializer_list<shared_ptr<shape>> shapes);
-	
-	virtual string getPostScript() const override;
+
 };
+
 
 //file output interface
 
