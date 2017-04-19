@@ -18,6 +18,7 @@ using std::vector;
 #include <fstream>
 using std::ofstream;
 #include <memory>
+using std::unique_ptr;
 using std::shared_ptr;
 using std::make_shared;
 
@@ -97,8 +98,6 @@ public:
 
 	double getCircumRad() const;
 	double getInRad() const;
-
-	
 
 	string getPostScript() const override;
 };
@@ -191,48 +190,52 @@ public:
 
 };
 
-class composite : public shape
+class composite : public shape //template for horizontal, vertical, and layered
 {
 
-private:
-	virtual ~composite() = default;
-	string _postScript;
+protected:
+	vector<shape> _shapes;
 
 public:
 
-	composite();
+	virtual ~composite() = default;
+	explicit composite(vector<shape> shapes);	//all children inherit this c'tor
 
-
-	moveToStart();
+	virtual string moveToStart() const = 0;
+	string drawShape(int index) const;
+	virtual string moveToNext(int currentIndex) const = 0;
+	string getPostScript() const override;	//uses functions above
 
 };
 
 
 class vertical : public composite
 {
-private:
-
 
 public:
-
+	using composite::composite;	//inherit composite c'tor
+	string moveToStart() const override;
+	string moveToNext(int currentIndex) const override;
 
 };
 
 class horizontal : public composite
 {
 
-private:
-
 public:
+	using composite::composite;	//inherit composite c'tor
+	string moveToStart() const override;
+	string moveToNext(int currentIndex) const override;
 
 };
 
 class layered : public composite
 {
-private:
 
 public:
-
+	using composite::composite;	//inherit composite c'tor
+	string moveToStart() const override;
+	string moveToNext(int currentIndex) const override;
 };
 
 

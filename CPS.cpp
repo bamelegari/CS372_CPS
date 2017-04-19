@@ -332,6 +332,88 @@ string shape::draw(const shape &s, int x, int y)
 	return ret;
 }
 
+composite::composite(vector<shape> shapes)
+{
+	_shapes = shapes;
+	setWidth(0);
+	for (int i=0; i < _shapes.size(); ++i)
+	{
+		setWidth(getWidth() + shapes[i].getWidth());
+	}
+
+	setHeight(0);
+	for(int i=0; i < _shapes.size(); ++i)
+	{
+		setHeight(getWidth() + shapes[i].getHeight());
+	}
+}
+
+
+string composite::drawShape(int index) const
+{
+	return _shapes[index].getPostScript();
+}
+
+string composite::getPostScript() const
+{
+	string ret = moveToStart();
+	ret += drawShape(0);
+
+	for (int i=1; i < _shapes.size(); ++i)
+	{
+		ret += moveToNext(i - 1);
+		ret += drawShape(i);
+	}
+
+	return ret;
+}
+
+string horizontal::moveToStart() const
+{
+	//move left to starting position
+	string ret = "-X 0 rmoveto \n";
+
+	findAndReplace(ret, "X", to_string(getWidth()/2));
+	return ret;
+}
+
+string vertical::moveToStart() const
+{
+	//move up to starting position
+	string ret = "0 Y rmoveto \n";
+
+	findAndReplace(ret, "Y", to_string(getHeight()/2));
+	return ret;
+}
+
+string layered::moveToStart() const
+{
+	return "";	//do nothing. No movement required.
+}
+
+string horizontal::moveToNext(int currentIndex) const
+{
+	//move right to next draw position
+	string ret = "X 0 rmoveto \n";
+
+	findAndReplace(ret, "X", to_string(_shapes[currentIndex].getWidth()/2));
+	return ret;
+}
+
+string vertical::moveToNext(int currentIndex) const
+{
+	//move down to next draw position
+	string ret = "0 -Y rmoveto \n";
+
+	findAndReplace(ret, "Y", to_string(_shapes[currentIndex].getHeight()/2));
+	return ret;
+}
+
+string layered::moveToNext(int currentIndex) const
+{
+	return ""; //do nothing, no move required.
+}
+
 mandelbrot::mandelbrot(int width, int height )
 {
 	int ht = height;
@@ -394,227 +476,6 @@ string pixel::getPostScript() const
 	return _postScript;
 }
 
-string vertical::vertStackOdd(const vector<shared_ptr<shape>> &shapes, int offset)
-{
-	string ret;
-
-
-	int mid = shapes.size()/2;
-
-	int upOffset = shapes[mid]->getHeight()/2.0, dnOffset = shapes[mid]->getHeight()/2.0;
-
-	//draw middle shape
-	ret = draw(*shapes[mid], 0, offset);
-
-	//draw surrounding shapes
-	for(int i = 1; i <= mid; i++)
-	{
-
-		upOffset += shapes[mid+i]->getHeight()/2.0;
-		dnOffset += shapes[mid-i]->getHeight()/2.0;
-
-		ret += draw(*shapes[mid+i],0, upOffset+offset);
-		ret += draw(*shapes[mid-i], 0,-dnOffset+offset);		
-
-		upOffset += shapes[mid+i]->getHeight()/2.0;
-		dnOffset += shapes[mid-i]->getHeight()/2.0;
-
-	}
-
-	return ret;
-}
-
-
-vertical::vertical(initializer_list<shared_ptr<shape>> shapes)
-{
-	double maxWidth = 0, sumHeight = 0;
-
-	for(auto s : shapes)
-	{
-		
-		sumHeight += s->getHeight();
-		if(s->getWidth() > maxWidth)
-			maxWidth = s->getWidth();
-	}
-
-	setWidth(maxWidth);
-	setHeight(sumHeight);
-
-
-
-
-	if(shapes.size()%2==0)	//even number of shapes
-	{
-		//split an even in half to get 2 odds
-
-		int lt=0,rt=0;
-
-		auto midPtr = shapes.begin()+ shapes.size()/2;
-
-
-		vector<shared_ptr<shape>> lefts(shapes.begin(), midPtr ),
-  						 rights(midPtr, shapes.end());
-
-  		for(int i = 0; i < (int)lefts.size()/2 + 1 ; i++)
-  		{
-  			rt += rights[i]->getHeight();
-  			lt -= lefts[lefts.size()-i-1]->getHeight();
-
-  			//bad form
-  			if(i == lefts.size()/2)
-  			{
-  				rt -= rights[i]->getHeight()/2;
-  				lt += lefts[lefts.size()-i-1]->getHeight()/2;
-  			}
-  		}
-
-		_postScript = vertStackOdd(lefts, lt) + vertStackOdd(rights, rt);
-
-	}
-	else
-	{
-
-		vector<shared_ptr<shape>> list(shapes.begin(), shapes.end());
-
-		_postScript = vertStackOdd(list, 0);
-	}
-
-
-}
-
-string horizontal::horStackOdd(const vector<shared_ptr<shape>> &shapes, int offset)
-{
-	string ret;
-
-
-	int mid = shapes.size()/2;
-
-	int rtOffset = shapes[mid]->getWidth()/2.0, ltOffset = shapes[mid]->getWidth()/2.0;
-
-	//draw middle shape
-	ret = draw(*shapes[mid], offset, 0);
-
-	//draw surrounding shapes
-	for(int i = 1; i <= mid; i++)
-	{
-
-		rtOffset += shapes[mid+i]->getWidth()/2.0;
-		ltOffset += shapes[mid-i]->getWidth()/2.0;
-
-		ret += draw(*shapes[mid+i], rtOffset+offset, 0);
-		ret += draw(*shapes[mid-i], -ltOffset+offset, 0);		
-
-		rtOffset += shapes[mid+i]->getWidth()/2.0;
-		ltOffset += shapes[mid-i]->getWidth()/2.0;
-
-	}
-
-	return ret;
-}
-
-horizontal::horizontal(initializer_list<shared_ptr<shape>> shapes)
-{
-	double sumWidth = 0, maxHeight = 0;
-
-	for(auto s : shapes)
-	{
-		
-		sumWidth += s->getWidth();
-		if(s->getHeight() > maxHeight)
-			maxHeight = s->getHeight();
-	}
-
-	setWidth(sumWidth);
-	setHeight(maxHeight);
-
-
-
-
-	if(shapes.size()%2==0)	//even number of shapes
-	{
-		//split an even in half to get 2 odds
-
-		int lt=0,rt=0;
-
-		auto midPtr = shapes.begin()+ shapes.size()/2;
-
-
-		vector<shared_ptr<shape>> lefts(shapes.begin(), midPtr ),
-  						 rights(midPtr, shapes.end());
-
-  		for(int i = 0; i < (int)lefts.size()/2 + 1 ; i++)
-  		{
-  			rt += rights[i]->getWidth();
-  			lt -= lefts[lefts.size()-i-1]->getWidth();
-
-  			//bad form
-  			if(i == lefts.size()/2)
-  			{
-  				rt -= rights[i]->getWidth()/2;
-  				lt += lefts[lefts.size()-i-1]->getWidth()/2;
-  			}
-  		}
-
-		_postScript = horStackOdd(lefts, lt) + horStackOdd(rights, rt);
-
-	}
-	else
-	{
-
-		vector<shared_ptr<shape>> list(shapes.begin(), shapes.end());
-
-		_postScript = horStackOdd(list, 0);
-	}
-
-
-}
-
-layered::layered(initializer_list<shared_ptr<shape>> shapes)
-{
-	for (auto i : shapes) // go through all shapes find newHighest width and height of shapes set it to layered width or height
-	{
-		// get the biggest box made with the height and width of all the shapes
-		// this is needed to get a center point from which everything will be drawn around
-		if (getWidth() < i->getWidth())
-		{
-			setWidth(i->getWidth()); // get biggest height too
-		}
-		if (getHeight() < i->getHeight())
-		{
-			setHeight(i->getHeight());
-		}
-		else {} // if not new tallest then go to next one
-	}
-	vector<shared_ptr<shape>> vecShapes(shapes.begin(), shapes.end());
-	string postSript;
-	double xCenterCord = getWidth() / 2.0; // we only need to go half way to reach the edge since were in the center
-	xCenterCord += 144;
-	double yCenterCord = getHeight() / 2.0;// do this for y cord as well
-	yCenterCord += 144;
-
-	for (int i = 0; i < vecShapes.size(); ++i)
-	{
-		yCenterCord -= vecShapes[i]->getHeight() / 2.0;
-		xCenterCord -= vecShapes[i]->getWidth() / 2.0;
-	//	postSript += draw(*vecShapes[i], xCenterCord, yCenterCord); // these are the maxWidths and maxHeights of all the shapes in the list
-		postSript += draw(*vecShapes[i], 0,0);	//check out my test with rects and circle, this way they are all centered
-	}
-	_postScript = postSript;
-}
-
-string horizontal::getPostScript() const
-{
-	return _postScript;
-}
-
-string vertical::getPostScript() const
-{
-	return _postScript;
-}
-string layered::getPostScript() const
-{
-	return _postScript;
-}
 void page::drawTo(const shape &s, int x, int y)
 {
 	_postScript += "gsave \n";
