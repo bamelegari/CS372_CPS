@@ -344,11 +344,10 @@ string composite::drawShape(int index) const
 
 string composite::getPostScript() const
 {
-	string ret = "%begin composite shape \n";
-	ret += TranslateToStart();
+	string ret = TranslateToStart();	//draw first shape at starting position
 	ret += drawShape(0);
 
-	for (int i=1; i < _shapes.size(); ++i)
+	for (int i=1; i < _shapes.size(); ++i)//draw each subsequent shape in correct position
 	{
 		ret += TranslateToNext(i);
 		ret += drawShape(i);
@@ -357,26 +356,26 @@ string composite::getPostScript() const
 	return ret;
 }
 
-//the constructors couldn't be inherited because each derived class redefines calcDimensions()
+//the constructors couldn't be inherited because each derived class redefines setDimensions()
 vertical::vertical(initializer_list<shared_ptr<shape>> shapes)	
 {
 	_shapes = shapes;
-	calcDimensions();
+	setDimensions();
 }
 
 horizontal::horizontal(initializer_list<shared_ptr<shape>> shapes)	
 {
 	_shapes = shapes;
-	calcDimensions();
+	setDimensions();
 }
 
 layered::layered(initializer_list<shared_ptr<shape>> shapes)	
 {
 	_shapes = shapes;
-	calcDimensions();
+	setDimensions();
 }
 
-void horizontal::calcDimensions()
+void horizontal::setDimensions()
 {
 	setWidth(0);						//width = sum of widths
 	for (int i=0; i < _shapes.size(); ++i)
@@ -393,7 +392,7 @@ void horizontal::calcDimensions()
 	}
 }
 
-void vertical::calcDimensions()
+void vertical::setDimensions()
 {
 	setWidth(_shapes[0]->getWidth());	//width = max of widths
 	for(int i=1; i < _shapes.size(); ++i)
@@ -410,7 +409,7 @@ void vertical::calcDimensions()
 	}
 }
 
-void layered::calcDimensions()
+void layered::setDimensions()
 {
 	setWidth(_shapes[0]->getWidth());	//width = max of widths
 	for(int i=1; i < _shapes.size(); ++i)
@@ -431,7 +430,7 @@ void layered::calcDimensions()
 
 string horizontal::TranslateToStart() const
 {
-	//move left to starting position
+	//move left to starting position, half the width of the entire composite shape
 	string ret = "-X 0 translate \n";
 
 	findAndReplace(ret, "X", to_string(getWidth()/2 - _shapes[0]->getWidth()/2));
@@ -440,7 +439,7 @@ string horizontal::TranslateToStart() const
 
 string vertical::TranslateToStart() const
 {
-	//move down to starting position
+	//move down to starting position, half the height of the entire composite shape
 	string ret = "0 -Y translate \n";
 
 	findAndReplace(ret, "Y", to_string(getHeight()/2 - _shapes[0]->getHeight()/2));
@@ -454,10 +453,11 @@ string layered::TranslateToStart() const
 
 string horizontal::TranslateToNext(int nextIndex) const
 {
-	//move right to next draw position
+	//move right to next draw position, a distance of half the width of the last shape +
+	//half the width of the next shape
 	string ret = "X 0 translate \n";
 
-	findAndReplace(ret, "X", 
+	findAndReplace(ret, "X", 	
 		to_string(_shapes[nextIndex]->getWidth()/2 + _shapes[nextIndex - 1]->getWidth()/2));
 
 	return ret;
@@ -465,7 +465,8 @@ string horizontal::TranslateToNext(int nextIndex) const
 
 string vertical::TranslateToNext(int nextIndex) const
 {
-	//move up to next draw position
+	//move up to next draw position, a distance of half the height of the last shape +
+	//half the height of the next shape
 	string ret = "0 Y translate \n";
 
 	findAndReplace(ret, "Y", 

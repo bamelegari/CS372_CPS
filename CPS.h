@@ -200,7 +200,7 @@ public:
 
 	virtual ~composite() = default;	
 
-	virtual void calcDimensions() = 0;
+	virtual void setDimensions() = 0;
 	virtual string TranslateToStart() const = 0;
 	string drawShape(int index) const;
 	virtual string TranslateToNext(int nextIndex) const = 0;
@@ -216,7 +216,7 @@ public:
 
 	vertical(initializer_list<shared_ptr<shape>> shapes);
 
-	void calcDimensions() override;
+	void setDimensions() override;
 	string TranslateToStart() const override;
 	string TranslateToNext(int nextIndex) const override;
 
@@ -229,7 +229,7 @@ public:
 
 	horizontal(initializer_list<shared_ptr<shape>> shapes);
 
-	void calcDimensions() override;
+	void setDimensions() override;
 	string TranslateToStart() const override;
 	string TranslateToNext(int nextIndex) const override;
 
@@ -242,7 +242,7 @@ public:
 
 	layered(initializer_list<shared_ptr<shape>> shapes);	
 
-	void calcDimensions() override;
+	void setDimensions() override;
 	string TranslateToStart() const override;
 	string TranslateToNext(int nextIndex) const override;
 };
