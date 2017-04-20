@@ -198,13 +198,12 @@ protected:
 
 public:
 
-	virtual ~composite() = default;
-	explicit composite(initializer_list<shared_ptr<shape>> shapes);	//all children inherit these c'tors
-	void calcDimensions();
+	virtual ~composite() = default;	
 
-	virtual string moveToStart() const = 0;
+	virtual void calcDimensions() = 0;
+	virtual string TranslateToStart() const = 0;
 	string drawShape(int index) const;
-	virtual string moveToNext(int currentIndex) const = 0;
+	virtual string TranslateToNext(int nextIndex) const = 0;
 	string getPostScript() const override;	//uses functions above
 
 };
@@ -214,9 +213,12 @@ class vertical : public composite
 {
 
 public:
-	using composite::composite;	//inherit composite c'tor
-	string moveToStart() const override;
-	string moveToNext(int currentIndex) const override;
+
+	vertical(initializer_list<shared_ptr<shape>> shapes);
+
+	void calcDimensions() override;
+	string TranslateToStart() const override;
+	string TranslateToNext(int nextIndex) const override;
 
 };
 
@@ -224,9 +226,12 @@ class horizontal : public composite
 {
 
 public:
-	using composite::composite;	//inherit composite c'tor
-	string moveToStart() const override;
-	string moveToNext(int currentIndex) const override;
+
+	horizontal(initializer_list<shared_ptr<shape>> shapes);
+
+	void calcDimensions() override;
+	string TranslateToStart() const override;
+	string TranslateToNext(int nextIndex) const override;
 
 };
 
@@ -234,9 +239,12 @@ class layered : public composite
 {
 
 public:
-	using composite::composite;	//inherit composite c'tor
-	string moveToStart() const override;
-	string moveToNext(int currentIndex) const override;
+
+	layered(initializer_list<shared_ptr<shape>> shapes);	
+
+	void calcDimensions() override;
+	string TranslateToStart() const override;
+	string TranslateToNext(int nextIndex) const override;
 };
 
 

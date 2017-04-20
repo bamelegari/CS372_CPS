@@ -332,90 +332,149 @@ string shape::draw(const shape &s, int x, int y)
 	return ret;
 }
 
-void composite::calcDimensions()
-{
-	setWidth(0);
-	for (int i=0; i < _shapes.size(); ++i)
-	{
-		setWidth(getWidth() + _shapes[i]->getWidth());
-	}
-
-	setHeight(0);
-	for(int i=0; i < _shapes.size(); ++i)
-	{
-		setHeight(getWidth() + _shapes[i]->getHeight());
-	}
-}
-
-
-composite::composite(initializer_list<shared_ptr<shape>> shapes)	//takes a vector
-{
-	_shapes = shapes;
-	calcDimensions();
-}
-
 
 string composite::drawShape(int index) const
 {
-	return _shapes[index]->getPostScript();
+	string ret = "gsave \n";
+	ret += _shapes[index]->getPostScript();
+	ret += "\n stroke\ngrestore\n";
+
+	return ret;
 }
 
 string composite::getPostScript() const
 {
-	string ret = moveToStart();
+	string ret = "%begin composite shape \n";
+	ret += TranslateToStart();
 	ret += drawShape(0);
 
 	for (int i=1; i < _shapes.size(); ++i)
 	{
-		ret += moveToNext(i - 1);
+		ret += TranslateToNext(i);
 		ret += drawShape(i);
 	}
 
 	return ret;
 }
 
-string horizontal::moveToStart() const
+//the constructors couldn't be inherited because each derived class redefines calcDimensions()
+vertical::vertical(initializer_list<shared_ptr<shape>> shapes)	
+{
+	_shapes = shapes;
+	calcDimensions();
+}
+
+horizontal::horizontal(initializer_list<shared_ptr<shape>> shapes)	
+{
+	_shapes = shapes;
+	calcDimensions();
+}
+
+layered::layered(initializer_list<shared_ptr<shape>> shapes)	
+{
+	_shapes = shapes;
+	calcDimensions();
+}
+
+void horizontal::calcDimensions()
+{
+	setWidth(0);						//width = sum of widths
+	for (int i=0; i < _shapes.size(); ++i)
+	{
+		setWidth(getWidth() + _shapes[i]->getWidth());
+	}
+
+	setHeight(_shapes[0]->getHeight());	//height = max of heights
+	for (int i=1; i < _shapes.size(); ++i)
+	{
+		double x = _shapes[i]->getHeight();
+		if (x > getHeight())
+			setHeight(x);
+	}
+}
+
+void vertical::calcDimensions()
+{
+	setWidth(_shapes[0]->getWidth());	//width = max of widths
+	for(int i=1; i < _shapes.size(); ++i)
+	{
+		double x = _shapes[i]->getWidth();
+		if (x > getWidth())
+			setWidth(x);
+	}
+
+	setHeight(0);						//height = sum of heights
+	for(int i=0; i < _shapes.size(); ++i)
+	{
+		setHeight(getHeight() + _shapes[i]->getHeight());
+	}
+}
+
+void layered::calcDimensions()
+{
+	setWidth(_shapes[0]->getWidth());	//width = max of widths
+	for(int i=1; i < _shapes.size(); ++i)
+	{
+		double x = _shapes[i]->getWidth();
+		if (x > getWidth())
+			setWidth(x);
+	}
+
+	setHeight(_shapes[0]->getHeight());	//height = max of heights
+	for (int i=1; i < _shapes.size(); ++i)
+	{
+		double x = _shapes[i]->getHeight();
+		if (x > getHeight())
+			setHeight(x);
+	}	
+}
+
+string horizontal::TranslateToStart() const
 {
 	//move left to starting position
-	string ret = "-X 0 rmoveto \n";
+	string ret = "-X 0 translate \n";
 
-	findAndReplace(ret, "X", to_string(getWidth()/2));
+	findAndReplace(ret, "X", to_string(getWidth()/2 - _shapes[0]->getWidth()/2));
 	return ret;
 }
 
-string vertical::moveToStart() const
+string vertical::TranslateToStart() const
 {
-	//move up to starting position
-	string ret = "0 Y rmoveto \n";
+	//move down to starting position
+	string ret = "0 -Y translate \n";
 
-	findAndReplace(ret, "Y", to_string(getHeight()/2));
+	findAndReplace(ret, "Y", to_string(getHeight()/2 - _shapes[0]->getHeight()/2));
 	return ret;
 }
 
-string layered::moveToStart() const
+string layered::TranslateToStart() const
 {
 	return "";	//do nothing. No movement required.
 }
 
-string horizontal::moveToNext(int currentIndex) const
+string horizontal::TranslateToNext(int nextIndex) const
 {
 	//move right to next draw position
-	string ret = "X 0 rmoveto \n";
+	string ret = "X 0 translate \n";
 
-	findAndReplace(ret, "X", to_string(_shapes[currentIndex]->getWidth()/2));
+	findAndReplace(ret, "X", 
+		to_string(_shapes[nextIndex]->getWidth()/2 + _shapes[nextIndex - 1]->getWidth()/2));
+
 	return ret;
 }
 
-string vertical::moveToNext(int currentIndex) const
+string vertical::TranslateToNext(int nextIndex) const
 {
-	//move down to next draw position
-	string ret = "0 -Y rmoveto \n";
+	//move up to next draw position
+	string ret = "0 Y translate \n";
 
-	findAndReplace(ret, "Y", to_string(_shapes[currentIndex]->getHeight()/2));
+	findAndReplace(ret, "Y", 
+		to_string(_shapes[nextIndex]->getHeight()/2 + _shapes[nextIndex - 1]->getHeight()/2));
+
 	return ret;
 }
 
-string layered::moveToNext(int currentIndex) const
+string layered::TranslateToNext(int nextIndex) const
 {
 	return ""; //do nothing, no move required.
 }
