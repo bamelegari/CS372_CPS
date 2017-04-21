@@ -342,14 +342,18 @@ string composite::drawShape(int index) const
 	return ret;
 }
 
+
+//this function is called for all composite shapes. The functions
+//called herein may or may not be overridden by classes derived from 
+//composite. Template.
 string composite::getPostScript() const
 {
-	string ret = TranslateToStart();	//draw first shape at starting position
+	string ret = translateToStart();	//draw first shape at starting position
 	ret += drawShape(0);
 
 	for (int i=1; i < _shapes.size(); ++i)//draw each subsequent shape in correct position
 	{
-		ret += TranslateToNext(i);
+		ret += translateToNext(i);
 		ret += drawShape(i);
 	}
 
@@ -357,6 +361,7 @@ string composite::getPostScript() const
 }
 
 //the constructors couldn't be inherited because each derived class redefines setDimensions()
+//so each one needed to be explicity typed out even though they all look the same
 vertical::vertical(initializer_list<shared_ptr<shape>> shapes)	
 {
 	_shapes = shapes;
@@ -428,7 +433,7 @@ void layered::setDimensions()
 	}	
 }
 
-string horizontal::TranslateToStart() const
+string horizontal::translateToStart() const
 {
 	//move left to starting position, half the width of the entire composite shape
 	string ret = "-X 0 translate \n";
@@ -437,7 +442,7 @@ string horizontal::TranslateToStart() const
 	return ret;
 }
 
-string vertical::TranslateToStart() const
+string vertical::translateToStart() const
 {
 	//move down to starting position, half the height of the entire composite shape
 	string ret = "0 -Y translate \n";
@@ -446,12 +451,12 @@ string vertical::TranslateToStart() const
 	return ret;
 }
 
-string layered::TranslateToStart() const
+string layered::translateToStart() const
 {
 	return "";	//do nothing. No movement required.
 }
 
-string horizontal::TranslateToNext(int nextIndex) const
+string horizontal::translateToNext(int nextIndex) const
 {
 	//move right to next draw position, a distance of half the width of the last shape +
 	//half the width of the next shape
@@ -463,7 +468,7 @@ string horizontal::TranslateToNext(int nextIndex) const
 	return ret;
 }
 
-string vertical::TranslateToNext(int nextIndex) const
+string vertical::translateToNext(int nextIndex) const
 {
 	//move up to next draw position, a distance of half the height of the last shape +
 	//half the height of the next shape
@@ -475,7 +480,7 @@ string vertical::TranslateToNext(int nextIndex) const
 	return ret;
 }
 
-string layered::TranslateToNext(int nextIndex) const
+string layered::translateToNext(int nextIndex) const
 {
 	return ""; //do nothing, no move required.
 }

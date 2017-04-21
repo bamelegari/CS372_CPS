@@ -18,7 +18,6 @@ using std::vector;
 #include <fstream>
 using std::ofstream;
 #include <memory>
-using std::unique_ptr;
 using std::shared_ptr;
 using std::make_shared;
 
@@ -157,7 +156,6 @@ public:
 
 };
 
-//compound shapes
 
 class rotated : public shape
 {
@@ -201,9 +199,9 @@ public:
 	virtual ~composite() = default;	
 
 	virtual void setDimensions() = 0;
-	virtual string TranslateToStart() const = 0;
+	virtual string translateToStart() const = 0;
 	string drawShape(int index) const;
-	virtual string TranslateToNext(int nextIndex) const = 0;
+	virtual string translateToNext(int nextIndex) const = 0;
 	string getPostScript() const override;	//uses functions above
 
 };
@@ -217,8 +215,8 @@ public:
 	vertical(initializer_list<shared_ptr<shape>> shapes);
 
 	void setDimensions() override;
-	string TranslateToStart() const override;
-	string TranslateToNext(int nextIndex) const override;
+	string translateToStart() const override;
+	string translateToNext(int nextIndex) const override;
 
 };
 
@@ -230,8 +228,8 @@ public:
 	horizontal(initializer_list<shared_ptr<shape>> shapes);
 
 	void setDimensions() override;
-	string TranslateToStart() const override;
-	string TranslateToNext(int nextIndex) const override;
+	string translateToStart() const override;
+	string translateToNext(int nextIndex) const override;
 
 };
 
@@ -243,8 +241,8 @@ public:
 	layered(initializer_list<shared_ptr<shape>> shapes);	
 
 	void setDimensions() override;
-	string TranslateToStart() const override;
-	string TranslateToNext(int nextIndex) const override;
+	string translateToStart() const override;
+	string translateToNext(int nextIndex) const override;
 };
 
 
